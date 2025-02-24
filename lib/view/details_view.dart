@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:arief_kiddocare_tech/provider/listing_prvd.dart';
-import 'package:arief_kiddocare_tech/model/listing_mdl.dart';
+import 'package:arief_kiddocare_tech/provider/kindergarten_pvd.dart';
+import 'package:arief_kiddocare_tech/model/kindergarten_mdl.dart';
 
 class DetailScreen extends StatefulWidget {
   final String kindergartenId;

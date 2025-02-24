@@ -2,8 +2,8 @@ import 'package:arief_kiddocare_tech/constants.dart';
 import 'package:arief_kiddocare_tech/view/details_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:arief_kiddocare_tech/provider/listing_prvd.dart';
-import 'package:arief_kiddocare_tech/model/listing_mdl.dart';
+import 'package:arief_kiddocare_tech/provider/kindergarten_pvd.dart';
+import 'package:arief_kiddocare_tech/model/kindergarten_mdl.dart';
 
 class ListingScreen extends StatefulWidget {
   @override
@@ -40,11 +40,11 @@ class _ListingScreenState extends State<ListingScreen> {
     });
   }
 
-  void _applyFilters() {
-    final query = _searchController.text;
-    final state = _selectedState;
-    Provider.of<KindergartenProvider>(context, listen: false).fetchfilteredKindergartens(name: query, state: state);
-  }
+  // void _applyFilters() {
+  //   final query = _searchController.text;
+  //   final state = _selectedState;
+  //   Provider.of<KindergartenProvider>(context, listen: false).fetchfilteredKindergartens(name: query, state: state);
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -54,16 +54,25 @@ class _ListingScreenState extends State<ListingScreen> {
         actions: [
           IconButton(
             icon: Icon(_isSearchExpanded ? Icons.close : Icons.search),
-            onPressed: _toggleSearch,
+            onPressed: () {
+              setState(() {
+                _isSearchExpanded = !_isSearchExpanded;
+                if (!_isSearchExpanded) {
+                  _searchController.clear();
+                  _selectedState = '';
+                }
+              });
+            },
           ),
         ],
         bottom: _isSearchExpanded
             ? PreferredSize(
-                preferredSize: Size.fromHeight(100),
+                preferredSize: Size.fromHeight(Screen.H(context) * 0.25),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
                     children: [
+                      // Search by Name
                       TextField(
                         controller: _searchController,
                         decoration: InputDecoration(
@@ -75,34 +84,50 @@ class _ListingScreenState extends State<ListingScreen> {
                         ),
                       ),
                       SizedBox(height: 8),
+
+                      // City & State Dropdowns
                       Consumer<KindergartenProvider>(
                         builder: (context, provider, child) {
                           final states = provider.getStates();
-                          return DropdownButtonFormField<String>(
-                            value: _selectedState.isEmpty ? null : _selectedState,
-                            hint: Text('Filter by state'),
-                            items: states.map((state) {
-                              return DropdownMenuItem(
-                                value: state,
-                                child: Text(state),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedState = value ?? '';
-                              });
-                            },
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(10),
+                          return Row(
+                            children: [
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: _selectedState.isEmpty ? null : _selectedState,
+                                  hint: Text('Filter by state'),
+                                  items: states.map((state) {
+                                    return DropdownMenuItem(
+                                      value: state,
+                                      child: Text(state),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _selectedState = value ?? '';
+                                    });
+                                  },
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           );
                         },
                       ),
                       SizedBox(height: 8),
+
+                      // Apply Button
                       ElevatedButton(
-                        onPressed: _applyFilters,
+                        onPressed: () {
+                          Provider.of<KindergartenProvider>(context, listen: false)
+                              .fetchFilteredKindergartens(name: _searchController.text, state: _selectedState);
+                          setState(() {
+                            _isSearchExpanded = false;
+                          });
+                        },
                         child: Text('Apply'),
                       ),
                     ],

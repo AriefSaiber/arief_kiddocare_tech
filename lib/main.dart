@@ -1,4 +1,4 @@
-import 'package:arief_kiddocare_tech/provider/listing_prvd.dart';
+import 'package:arief_kiddocare_tech/provider/kindergarten_pvd.dart';
 import 'package:arief_kiddocare_tech/view/listing_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
