@@ -18,7 +18,7 @@ class KindergartenApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Provider State Management Demo',
+      title: 'Arief Kiddocare Tech Flutter',
       home: ListingScreen(),
     );
   }

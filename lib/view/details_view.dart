@@ -25,7 +25,7 @@ class _DetailScreenState extends State<DetailScreen> {
   Future<void> _fetchKindergartenDetails() async {
     final provider = Provider.of<KindergartenProvider>(context, listen: false);
     try {
-      final kindergarten = await provider.fetchKindergartenDetails(widget.kindergartenId);
+      final kindergarten = await provider.fetchKindergartenDetails(context, widget.kindergartenId);
       setState(() {
         _kindergarten = kindergarten;
         _isLoading = false;

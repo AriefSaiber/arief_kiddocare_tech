@@ -1,3 +1,4 @@
+import 'package:arief_kiddocare_tech/component/snackbar.dart';
 import 'package:arief_kiddocare_tech/model/kindergarten_mdl.dart';
 import 'package:arief_kiddocare_tech/services/kindergarten_svc.dart';
 import 'package:flutter/material.dart';
@@ -11,16 +12,33 @@ class KindergartenProvider with ChangeNotifier {
   final int _perPage = 10;
   int _totalPages = 1;
   String _searchQuery = '';
-  String _selectedState = '';
-  String _selectedCity = '';
+  bool isSearch = false;
 
   List<Kindergarten> get kindergartens => _filteredKindergartens;
+  // bool get isSearch => _isSearch;
   bool get isLoading => _isLoading;
   int get totalPages => _totalPages;
   String get searchQuery => _searchQuery;
   int get currentPage => _page; // Add this getter
 
-  Future<void> fetchKindergartens({int page = 1, String query = ""}) async {
+  List<String> stateList = [
+    "All States",
+    "Selangor",
+    "Perlis",
+    "Kedah",
+    "Perak",
+    "Johor",
+    "Pahang",
+    "Sabah",
+    "Sarawak",
+    "Federal Territory of Putrajaya",
+    "Federal Territory of Kuala Lumpur",
+    "Malacca",
+    "Penang"
+  ];
+
+  //=========================FETCH BY PAGES=========================
+  Future<void> fetchKindergartens(BuildContext context, {int page = 1, String query = ""}) async {
     if (_isLoading || page > _totalPages) return;
 
     _isLoading = true;
@@ -35,20 +53,25 @@ class KindergartenProvider with ChangeNotifier {
       _searchQuery = query;
       _filteredKindergartens = _applyFilter();
     } catch (e) {
-      print('Error fetching kindergartens: $e');
+      snackBar(context, 'Error fetching kindergartens: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> fetchFilteredKindergartens({String? name, String? state}) async {
+  //=========================FETCH FILTERED KINDERGARTENS=========================
+  Future<void> fetchFilteredKindergartens(BuildContext context, {String? name, String? state}) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final response = await _service.fetchKindergartens(page: 1, perPage: _perPage);
-      _kindergartens = response.data;
+      final response = await _service.fetchAllKindergartens();
+      _kindergartens = response;
+
+      if (state == "All States") {
+        state = "";
+      }
 
       _filteredKindergartens = _kindergartens.where((kindergarten) {
         final matchesName =
@@ -57,7 +80,7 @@ class KindergartenProvider with ChangeNotifier {
         return matchesName && matchesState;
       }).toList();
     } catch (e) {
-      print('Error fetching kindergartens: $e');
+      snackBar(context, 'Error fetching kindergartens: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -81,18 +104,11 @@ class KindergartenProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  List<String> getStates() {
-    final states = _kindergartens.map((k) => k.state).toSet().toList();
-    states.sort();
-    states.insert(0, 'All Locations');
-    return states;
-  }
-
-  Future<Kindergarten> fetchKindergartenDetails(String id) async {
+  Future<Kindergarten> fetchKindergartenDetails(BuildContext context, String id) async {
     try {
       return await _service.fetchKindergartenDetails(id);
     } catch (e) {
-      print('Error fetching kindergarten details: $e');
+      snackBar(context, 'Error fetching kindergarten details: $e');
       throw e;
     }
   }

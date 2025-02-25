@@ -1,4 +1,6 @@
+import 'package:arief_kiddocare_tech/component/listing_comp.dart';
 import 'package:arief_kiddocare_tech/constants.dart';
+import 'package:arief_kiddocare_tech/services/kindergarten_svc.dart';
 import 'package:arief_kiddocare_tech/view/details_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -19,7 +21,7 @@ class _ListingScreenState extends State<ListingScreen> {
   @override
   void initState() {
     super.initState();
-    Provider.of<KindergartenProvider>(context, listen: false).fetchKindergartens();
+    Provider.of<KindergartenProvider>(context, listen: false).fetchKindergartens(context);
   }
 
   @override
@@ -28,23 +30,6 @@ class _ListingScreenState extends State<ListingScreen> {
     _scrollController.dispose();
     super.dispose();
   }
-
-  void _toggleSearch() {
-    setState(() {
-      _isSearchExpanded = !_isSearchExpanded;
-      if (!_isSearchExpanded) {
-        _searchController.clear();
-        _selectedState = '';
-        Provider.of<KindergartenProvider>(context, listen: false).fetchKindergartens();
-      }
-    });
-  }
-
-  // void _applyFilters() {
-  //   final query = _searchController.text;
-  //   final state = _selectedState;
-  //   Provider.of<KindergartenProvider>(context, listen: false).fetchfilteredKindergartens(name: query, state: state);
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +50,7 @@ class _ListingScreenState extends State<ListingScreen> {
             },
           ),
         ],
+        //============================Expanded Filter============================
         bottom: _isSearchExpanded
             ? PreferredSize(
                 preferredSize: Size.fromHeight(Screen.H(context) * 0.25),
@@ -85,10 +71,10 @@ class _ListingScreenState extends State<ListingScreen> {
                       ),
                       SizedBox(height: 8),
 
-                      // City & State Dropdowns
+                      // State Dropdowns
                       Consumer<KindergartenProvider>(
                         builder: (context, provider, child) {
-                          final states = provider.getStates();
+                          final states = provider.stateList;
                           return Row(
                             children: [
                               Expanded(
@@ -120,16 +106,27 @@ class _ListingScreenState extends State<ListingScreen> {
                       SizedBox(height: 8),
 
                       // Apply Button
-                      ElevatedButton(
-                        onPressed: () {
-                          Provider.of<KindergartenProvider>(context, listen: false)
-                              .fetchFilteredKindergartens(name: _searchController.text, state: _selectedState);
-                          setState(() {
-                            _isSearchExpanded = false;
-                          });
+                      applyButton(
+                        context: context,
+                        onPressed: () async {
+                          final provider = Provider.of<KindergartenProvider>(context, listen: false);
+                          if (_searchController.text.isEmpty &&
+                              (_selectedState.isEmpty || _selectedState == 'All States')) {
+                            await provider.fetchKindergartens(context);
+                            setState(() {
+                              provider.isSearch = false;
+                              _isSearchExpanded = false;
+                            });
+                          } else {
+                            await provider.fetchFilteredKindergartens(context,
+                                name: _searchController.text, state: _selectedState);
+                            setState(() {
+                              provider.isSearch = true;
+                              _isSearchExpanded = false;
+                            });
+                          }
                         },
-                        child: Text('Apply'),
-                      ),
+                      )
                     ],
                   ),
                 ),
@@ -141,10 +138,11 @@ class _ListingScreenState extends State<ListingScreen> {
           Expanded(
             child: Consumer<KindergartenProvider>(
               builder: (context, provider, child) {
-                if (provider.isLoading && provider.kindergartens.isEmpty) {
+                if (provider.isLoading) {
                   return Center(child: CircularProgressIndicator());
+                } else if (provider.kindergartens.isEmpty) {
+                  return Center(child: Text('No kindergartens found'));
                 }
-
                 return ListView.builder(
                   itemCount: provider.kindergartens.length,
                   itemBuilder: (context, index) {
@@ -167,70 +165,9 @@ class _ListingScreenState extends State<ListingScreen> {
               },
             ),
           ),
-          _buildPaginationControls(), // Add Pagination Widget
+          if (!Provider.of<KindergartenProvider>(context, listen: false).isSearch) buildPaginationControls(context),
         ],
       ),
     );
   }
-}
-
-Widget _buildPaginationControls() {
-  return Consumer<KindergartenProvider>(
-    builder: (context, provider, child) {
-      if (provider.totalPages <= 1) return SizedBox();
-
-      int currentPage = provider.currentPage;
-      int totalPages = provider.totalPages;
-
-      int startPage = (currentPage - 2).clamp(1, totalPages - 4);
-      int endPage = (startPage + 4).clamp(5, totalPages);
-
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Previous Button
-            if (currentPage > 1)
-              IconButton(
-                icon: Icon(Icons.chevron_left),
-                onPressed: () {
-                  provider.fetchKindergartens(page: currentPage - 1);
-                },
-              ),
-
-            // Page Number Buttons
-            for (int i = startPage; i <= endPage; i++)
-              SizedBox(
-                width: Screen.W(context) * 0.12, // Adjust as needed
-                child: TextButton(
-                  onPressed: () {
-                    provider.fetchKindergartens(page: i);
-                  },
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.zero, // Remove extra padding
-                  ),
-                  child: Text(
-                    '$i',
-                    style: TextStyle(
-                      fontSize: 20, // Adjust font size
-                      color: currentPage == i ? Colors.blue : Colors.black,
-                    ),
-                  ),
-                ),
-              ),
-
-            // Next Button
-            if (currentPage < totalPages)
-              IconButton(
-                icon: Icon(Icons.chevron_right),
-                onPressed: () {
-                  provider.fetchKindergartens(page: currentPage + 1);
-                },
-              ),
-          ],
-        ),
-      );
-    },
-  );
 }
